@@ -1,14 +1,15 @@
 /**
- * The config seam — the entire product is "the package owns the *how*,
- * the consumer's config owns the *what*." (docs/BRIEF.md, First session §2)
- *
- * Designed against two real checks before the runner exists:
- * see examples/stilltrue.config.ts (GCPS board roster + BOC refresh).
+ * The config seam — the package owns the *how*, the consumer's config owns
+ * the *what*. Designed against the real production check it replaces
+ * (bfoster-services scripts/check-school-board-drift.js): fetch pages into a
+ * text corpus, assert curated markers still appear, tolerate partial fetch
+ * failures with warnings, and never conflate "facts changed" with "source
+ * unreachable".
  */
 
-/** What a drift check found. Three outcomes, never two (BRIEF §First session 4). */
+/** Three outcomes, never two (docs/BRIEF.md, First session §4). */
 export type DriftOutcome =
-  /** Live source still matches the expected file. */
+  /** Live source still matches the curated facts. */
   | 'pass'
   /** Facts no longer match — fail the build. A human fixes. */
   | 'rot'
@@ -18,35 +19,49 @@ export type DriftOutcome =
 export interface DriftResult {
   name: string;
   outcome: DriftOutcome;
-  /** Human-readable detail: the diff for `rot`, the cause for `error`. */
+  /** One issue per entry: the mismatches for `rot`, the cause for `error`. */
   messages: string[];
-  /** Structured diff when outcome is `rot`, for the HTML report. */
-  diff?: { expected: unknown; actual: unknown };
+  /** Non-fatal notes (e.g. one of several pages unreachable). */
+  warnings: string[];
   checkedAt: string;
+  durationMs: number;
+}
+
+/** Passed to consumer `source`/`expect` functions. */
+export interface CheckContext {
+  /** Record a non-fatal problem (partial fetch failure, odd markup, …). */
+  warn: (message: string) => void;
+  /** Absolute directory of the loaded config file — resolve data paths from here. */
+  configDir: string;
 }
 
 /**
- * One curated fact vs its live authoritative source.
- *
- * `source()` is the consumer's code — it may fetch+parse deterministically
- * or use an LLM to extract structure from a messy page; the package neither
- * knows nor cares. The comparison stays deterministic either way.
+ * Deterministic comparison: returns mismatch messages, [] = pass.
+ * Built-ins: 'contains-all' (expected: string[] markers, actual: corpus
+ * string, case-insensitive) and 'deep-equal'.
  */
-export interface DriftCheck<T = unknown> {
+export type CompareFn<E, A> = (expected: E, actual: A) => string[];
+export type Compare<E, A> = 'contains-all' | 'deep-equal' | CompareFn<E, A>;
+
+/**
+ * One curated fact-set vs its live authoritative source.
+ *
+ * `source()` is consumer code — deterministic fetch+parse or LLM extraction,
+ * the package neither knows nor cares; a throw means outcome `error`, never
+ * `rot`. The comparison is always deterministic.
+ */
+export interface DriftCheck<E = unknown, A = unknown> {
   name: string;
-  /** Fetch the live source and return structured data. Throw => `error`, never `rot`. */
-  source: () => Promise<T>;
-  /** Path to the curated expected file (JSON), or the expected value itself. */
-  expect: string | T;
-  /**
-   * How to compare. A named built-in ('deep-equal', 'surnames', ...) or a
-   * custom deterministic function returning mismatch messages ([] = pass).
-   */
-  compare?: string | ((expected: T, actual: T) => string[]);
+  /** Fetch the live source. Throw => `error`. */
+  source: (ctx: CheckContext) => Promise<A>;
+  /** The curated expectation: a value, or a function deriving it (e.g. from a data file). */
+  expect: E | ((ctx: CheckContext) => E | Promise<E>);
+  /** Defaults to 'deep-equal'. */
+  compare?: Compare<E, A>;
 }
 
 export interface StilltrueConfig {
-  drift?: DriftCheck<any>[];
+  drift?: DriftCheck<any, any>[];
   /** golden and verify are later phases — see docs/BRIEF.md build plan. */
   golden?: unknown;
   verify?: unknown;

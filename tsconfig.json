@@ -8,7 +8,11 @@
     "declaration": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }
