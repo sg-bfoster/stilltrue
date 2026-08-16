@@ -119,6 +119,8 @@ test('surname strips titles and takes last word', () => {
   assert.equal(surname('Dr. Jane van Smith'), 'Smith');
   assert.equal(surname('Mr Bob Jones'), 'Jones');
   assert.equal(surname('Cher'), 'Cher');
+  assert.equal(surname('Jasper Watkins III'), 'Watkins');
+  assert.equal(surname('Ken Griffey, Jr.'), 'Griffey');
 });
 
 test('htmlToText strips scripts, styles, tags, entities', () => {

@@ -65,10 +65,13 @@ export function json<T = any, E = T>(path: string, derive?: (data: T) => E) {
 /**
  * Surname as the drift signal — titles and first names vary in page copy
  * ("Dr. Jane Smith" vs "Superintendent Smith"); the surname is stable.
+ * Leading honorifics and trailing generational suffixes are stripped
+ * ("Jasper Watkins III" → "Watkins").
  */
 export function surname(fullName: string): string {
   const cleaned = String(fullName)
     .replace(/^(dr|mr|mrs|ms)\.?\s+/i, '')
+    .replace(/,?\s+(jr|sr|ii|iii|iv|v)\.?$/i, '')
     .trim();
   const parts = cleaned.split(/\s+/);
   return parts[parts.length - 1] ?? '';

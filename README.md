@@ -32,11 +32,47 @@ Drift has three outcomes, never two: `pass`, `rot` (facts changed — fail the
 build), and `error` (source unreachable — warn, don't fail). Conflating the
 last two causes alarm fatigue.
 
+## Quick start
+
+```ts
+// stilltrue.config.ts (or .mjs / .js)
+import { defineStilltrue, corpus, json, surname } from 'stilltrue';
+
+export default defineStilltrue({
+  drift: [
+    {
+      name: 'school-board-roster',
+      source: corpus(['https://district.example.org/board']),
+      expect: json('./data/school-board.json', (d) => d.members.map((m) => surname(m.name))),
+      compare: 'contains-all',
+    },
+  ],
+});
+```
+
+```yaml
+# .github/workflows/drift.yml
+on:
+  schedule: [{ cron: '17 14 * * 3' }]  # off-beat minute: GitHub drops :00 crons
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: npm ci
+      - run: npx stilltrue drift
+```
+
+`source` is your code (fetch+parse, or LLM extraction — the comparison stays
+deterministic either way). `expect` is your curated file. Rot fails the run
+with one message per vanished fact; unreachable sources only warn.
+
 ## Status
 
-Pre-v0.1. Current state: config seam design (`src/config.ts`) validated
-against two real production checks (`examples/stilltrue.config.ts`). Next:
-the drift runner, then swapping AskGwinnett's bespoke GitHub Actions to it.
+v0.1 — `drift` is real and running in production (AskGwinnett). `golden` and
+`verify` are designed but not yet shipped; see the brief.
 
 ## License
 
