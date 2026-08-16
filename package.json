@@ -1,6 +1,6 @@
 {
   "name": "stilltrue",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Your tests check your code. stilltrue checks your facts. CI checks for AI-in-the-loop apps: drift (curated facts vs live sources), golden (regression evals), verify (judge answers against sources).",
   "keywords": [
     "drift",
@@ -37,5 +37,13 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sg-bfoster/stilltrue.git"
+  },
+  "homepage": "https://github.com/sg-bfoster/stilltrue#readme",
+  "bugs": {
+    "url": "https://github.com/sg-bfoster/stilltrue/issues"
   }
 }
