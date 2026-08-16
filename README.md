@@ -11,7 +11,7 @@ no server, no dashboard, no SaaS.
 |---|---|---|
 | `npx stilltrue drift` | Curated facts vs their live authoritative sources — fails the build on rot | **v0.1 focus** |
 | `npx stilltrue golden` | Deterministic regression evals for answers | later (may wrap promptfoo) |
-| `verify` (library) | Judge answers against their sources in the request path | later (P9-shaped staged pipeline) |
+| `verify` (library) | Staged acceptance pipeline for AI output — judge answers against sources in the request path | **shipped 0.3.0** |
 
 **Why drift first:** "drift detection" in the market means statistical ML
 feature drift; website-change monitors alert humans, not CI. Nobody ships
@@ -69,10 +69,37 @@ jobs:
 deterministic either way). `expect` is your curated file. Rot fails the run
 with one message per vanished fact; unreachable sources only warn.
 
+## Verify — staged acceptance for AI output
+
+An ordered, short-circuiting pipeline: each stage is a pluggable judge — a
+Zod parse, a deterministic validator, or an LLM. Rejection is structured
+(`{ stage, messages[] }`, one issue per entry) and designed to be fed back to
+the generator for a retry. Stages that *throw* are infrastructure failures,
+not verdicts: `failPolicy: 'open'` (default) warns and continues — a judge
+outage must never block your app.
+
+```ts
+import { runVerify, zodStage, generateVerified, formatRejection } from 'stilltrue';
+
+const stages = [
+  zodStage('parse_schema', AnswerSchema),
+  { name: 'grounding', timeoutMs: 10_000, check: llmJudge },     // may return a revision
+  { name: 'chase-sim', tier: 'ci', check: expensiveSimulation }, // skipped inline
+];
+
+// Request path:
+const result = await runVerify(stages, draft);
+publish(result.value); // draft, parsed draft, or the judge's rewrite
+
+// Generator loop (one automatic retry, then fall back — don't loop forever):
+const gen = await generateVerified({ generate: (feedback) => ask(model, prompt, feedback && formatRejection(feedback)), stages });
+```
+
 ## Status
 
-v0.1 — `drift` is real and running in production (AskGwinnett). `golden` and
-`verify` are designed but not yet shipped; see the brief.
+v0.3 — `drift` and `report` running in production CI (AskGwinnett); `verify`
+shipped as a library. `golden` remains open: wrap promptfoo or defer to it
+(see the brief's competitive research).
 
 ## License
 

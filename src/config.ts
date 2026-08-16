@@ -62,9 +62,10 @@ export interface DriftCheck<E = unknown, A = unknown> {
 
 export interface StilltrueConfig {
   drift?: DriftCheck<any, any>[];
-  /** golden and verify are later phases — see docs/BRIEF.md build plan. */
+  /** Named verify pipelines (see src/verify.ts) — usable from library code. */
+  verify?: Record<string, import('./verify.ts').VerifyStage<any>[]>;
+  /** golden is a later phase — see docs/BRIEF.md build plan. */
   golden?: unknown;
-  verify?: unknown;
 }
 
 /** Identity function for typed configs: `export default defineStilltrue({...})`. */

@@ -11,3 +11,15 @@ export {
 export { corpus, json, surname, htmlToText, type CorpusOptions } from './helpers.ts';
 export { runDrift, runDriftCheck, type RunDriftOptions } from './runner.ts';
 export { resolveCompare } from './compare.ts';
+export {
+  runVerify,
+  zodStage,
+  formatRejection,
+  generateVerified,
+  type VerifyStage,
+  type VerifyResult,
+  type StageOutcome,
+  type StageContext,
+  type RunVerifyOptions,
+  type GenerateVerifiedOptions,
+} from './verify.ts';
