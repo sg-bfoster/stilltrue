@@ -36,8 +36,8 @@ project folder with your facts saved in a JSON file.
 npm install --save-dev stilltrue
 ```
 
-**2. Scaffold a check** — this creates a ready-to-edit config file and an
-example facts file (it never overwrites anything you already have):
+**2. Scaffold a check** — this creates a ready-to-edit config file (it
+never overwrites anything you already have):
 
 ```bash
 npx stilltrue init
@@ -45,34 +45,51 @@ npx stilltrue init
 
 Open the generated `stilltrue.config.mjs`. Each check answers three
 questions: *where do I fetch the truth from* (`source`), *what do I
-believe* (`expect`), and *how do I compare the two* (`compare`):
+believe* (`expect`), and *how do I compare the two* (`compare`) — and in
+its simplest form, **the only editing needed is replacing strings**:
 
 ```js
-import { defineStilltrue, corpus, json, surname } from 'stilltrue';
+import { defineStilltrue, corpus } from 'stilltrue';
 
 export default defineStilltrue({
   drift: [
     {
-      name: 'school-board-roster',
-      // Where the truth lives: the district's own pages.
-      source: corpus(['https://www.myschooldistrict.org/board']),
-      // What you believe: read your saved file, keep just the last names.
-      expect: json('./data/school-board.json', (data) =>
-        data.members.map((m) => surname(m.name))
-      ),
-      // How to compare: every name must still appear on those pages.
+      name: 'my-first-check',
+      // Where the truth lives: the official page(s) your facts came from.
+      source: corpus(['https://example.org/about']),
+      // What you believe: your facts, as short strings ("markers").
+      expect: ['Jane Smith', 'Main Street Office', '12 locations'],
+      // How to compare: every marker must still appear on those pages.
       compare: 'contains-all',
     },
   ],
 });
 ```
 
-This example says: *fetch the board page, and make sure every last name in
-my `school-board.json` file still appears somewhere on it.*
+This says: *fetch that page, and make sure "Jane Smith", "Main Street
+Office", and "12 locations" all still appear on it.* Swap in your own URL
+and your own facts — that's a working check, no programming required.
 
 Choosing what to assert is the judgment call — surnames beat full names,
 "143 schools" beats a bare "143". The short guide:
 [docs/MARKERS.md](docs/MARKERS.md).
+
+**Leveling up (optional):** you don't have to keep the facts in the config.
+If `./data/markers.json` is just a list of strings, point at it with
+`expect: json('./data/markers.json')` — still no code. And if your app
+already keeps structured data, derive the markers from it so your data file
+stays the single source of truth:
+
+```js
+// ./data/school-board.json: { "members": [{ "name": "Dr. Jane Smith" }, ...] }
+expect: json('./data/school-board.json', (data) =>
+  data.members.map((m) => surname(m.name))   // keeps just "Smith" — titles
+),                                           // and first names vary on pages
+```
+
+The function receives *your* file's contents, whatever shape they are, and
+returns the list of markers — stilltrue never needs to understand your data
+structure. Update the data file and the markers update themselves.
 
 **3. Run it:**
 

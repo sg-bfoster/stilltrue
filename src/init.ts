@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -11,42 +11,50 @@ export default defineStilltrue({
   drift: [
     {
       // A short id for this check — shows up in output and reports.
-      name: 'example-board-roster',
+      name: 'my-first-check',
 
       // WHERE THE TRUTH LIVES: the official page(s) your facts came from.
       // corpus() fetches each page and strips it down to readable text.
-      // If one page is unreachable it warns; only if ALL are down does the
-      // check report an error (which never fails your build).
       source: corpus([
-        'https://example.org/board',
-        // 'https://example.org/about',   // add more pages if facts span several
+        'https://example.org/about',
+        // 'https://example.org/board',   // add more pages if facts span several
       ]),
 
-      // WHAT YOU BELIEVE: read your saved facts file and pick out the
-      // "markers" — short, stable strings that must still appear on the
-      // page(s) above. Here: each member's last name, plus one number.
-      expect: json('./data/example-facts.json', (data) => [
-        ...data.members.map((m) => surname(m.name)),
-        \`\${data.totalSchools} schools\`,
-      ]),
+      // WHAT YOU BELIEVE: list the facts as short strings ("markers").
+      // Every one of these must still appear somewhere on the page(s)
+      // above, or the check fails and names the missing one.
+      expect: [
+        'Jane Smith',
+        'Main Street Office',
+        '12 locations',
+      ],
 
       // HOW TO COMPARE: 'contains-all' = every marker must appear in the
-      // fetched text (case-insensitive). Any missing marker = rot = the
-      // build fails and tells you which fact went stale.
+      // fetched page text (case-insensitive).
       compare: 'contains-all',
     },
+
+    // ── Leveling up (optional) ──────────────────────────────────────────
+    //
+    // Instead of listing markers inline, you can keep them in a file.
+    // If ./data/markers.json contains just a list of strings —
+    //   ["Jane Smith", "Main Street Office", "12 locations"]
+    // — then this works with no code at all:
+    //
+    //   expect: json('./data/markers.json'),
+    //
+    // And if your app already keeps structured data — say
+    // ./data/board.json looks like
+    //   { "members": [ { "name": "Dr. Jane Smith" }, { "name": "Bob Jones Jr." } ] }
+    // — you can derive the markers from it, so your data file stays the
+    // single source of truth (surname() keeps just "Smith" / "Jones",
+    // because pages change titles and first names more than surnames):
+    //
+    //   expect: json('./data/board.json', (data) =>
+    //     data.members.map((m) => surname(m.name))
+    //   ),
   ],
 });
-`;
-
-const DATA_TEMPLATE = `{
-  "_comment": "Example facts file - replace with your own data, or point the config at a file you already have.",
-  "members": [
-    { "name": "Dr. Jane Smith" },
-    { "name": "Robert Jones Jr." }
-  ],
-  "totalSchools": 12
-}
 `;
 
 export interface InitResult {
@@ -54,12 +62,8 @@ export interface InitResult {
   skipped: string[];
 }
 
-/** Write starter config + example data file. Never overwrites. */
+/** Write the starter config. Never overwrites an existing one. */
 export async function init(dir: string): Promise<InitResult> {
-  const created: string[] = [];
-  const skipped: string[] = [];
-
-  const configPath = join(dir, 'stilltrue.config.mjs');
   const existingConfig = [
     'stilltrue.config.mjs',
     'stilltrue.config.ts',
@@ -68,20 +72,8 @@ export async function init(dir: string): Promise<InitResult> {
     'stilltrue.config.cjs',
   ].find((name) => existsSync(join(dir, name)));
   if (existingConfig) {
-    skipped.push(existingConfig);
-  } else {
-    await writeFile(configPath, CONFIG_TEMPLATE);
-    created.push('stilltrue.config.mjs');
+    return { created: [], skipped: [existingConfig] };
   }
-
-  const dataPath = join(dir, 'data', 'example-facts.json');
-  if (existsSync(dataPath)) {
-    skipped.push('data/example-facts.json');
-  } else {
-    await mkdir(join(dir, 'data'), { recursive: true });
-    await writeFile(dataPath, DATA_TEMPLATE);
-    created.push('data/example-facts.json');
-  }
-
-  return { created, skipped };
+  await writeFile(join(dir, 'stilltrue.config.mjs'), CONFIG_TEMPLATE);
+  return { created: ['stilltrue.config.mjs'], skipped: [] };
 }

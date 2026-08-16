@@ -115,9 +115,9 @@ try {
       if (created.length) {
         console.log(
           '\nNext steps:\n' +
-            '  1. Edit stilltrue.config.mjs — point source at the real page(s) your facts came from\n' +
-            '  2. Edit data/example-facts.json — or point the config at a facts file you already have\n' +
-            '  3. Run: npx stilltrue drift\n' +
+            '  1. Edit stilltrue.config.mjs — point source at the real page(s) your facts came from,\n' +
+            '     and replace the example markers with your own facts (plain strings)\n' +
+            '  2. Run: npx stilltrue drift\n' +
             'Picking good markers: docs/MARKERS.md in the stilltrue repo',
         );
       }

@@ -6,26 +6,26 @@ import { join } from 'node:path';
 import { init } from '../src/init.ts';
 import { loadConfig } from '../src/loadConfig.ts';
 
-test('init writes config + example data with next-step markers', async () => {
+test('init writes a config that leads with inline markers (no code required)', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'stilltrue-init-'));
   const r = await init(dir);
-  assert.deepEqual(r.created, ['stilltrue.config.mjs', 'data/example-facts.json']);
+  assert.deepEqual(r.created, ['stilltrue.config.mjs']);
   assert.deepEqual(r.skipped, []);
   const config = await readFile(join(dir, 'stilltrue.config.mjs'), 'utf8');
   assert.match(config, /defineStilltrue/);
   assert.match(config, /contains-all/);
-  JSON.parse(await readFile(join(dir, 'data', 'example-facts.json'), 'utf8'));
+  // The active expect is a plain string list; json()/surname() appear only
+  // in the commented "leveling up" section.
+  assert.match(config, /'Jane Smith',/);
+  assert.match(config, /Leveling up/);
 });
 
-test('init never overwrites an existing config (any extension) or data file', async () => {
+test('init never overwrites an existing config (any extension)', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'stilltrue-init-'));
   await writeFile(join(dir, 'stilltrue.config.ts'), '// mine');
   const r = await init(dir);
+  assert.deepEqual(r.created, []);
   assert.deepEqual(r.skipped, ['stilltrue.config.ts']);
-  assert.deepEqual(r.created, ['data/example-facts.json']);
-  const again = await init(dir);
-  assert.deepEqual(again.created, []);
-  assert.deepEqual(again.skipped, ['stilltrue.config.ts', 'data/example-facts.json']);
   assert.equal(await readFile(join(dir, 'stilltrue.config.ts'), 'utf8'), '// mine');
 });
 
@@ -38,6 +38,6 @@ test('the generated config actually loads (template stays valid)', async () => {
   await writeFile(join(dir, 'stilltrue.config.mjs'), raw.replace("'stilltrue'", JSON.stringify(selfPath)));
   const { config } = await loadConfig(join(dir, 'stilltrue.config.mjs'));
   assert.equal(config.drift?.length, 1);
-  assert.equal(config.drift?.[0]?.name, 'example-board-roster');
-  assert.equal(config.drift?.[0]?.compare, 'contains-all');
+  assert.equal(config.drift?.[0]?.name, 'my-first-check');
+  assert.deepEqual(config.drift?.[0]?.expect, ['Jane Smith', 'Main Street Office', '12 locations']);
 });
