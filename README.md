@@ -36,10 +36,16 @@ project folder with your facts saved in a JSON file.
 npm install --save-dev stilltrue
 ```
 
-**2. Describe a check** — create a file called `stilltrue.config.mjs` in
-the same folder. Each check answers three questions: *where do I fetch the
-truth from* (`source`), *what do I believe* (`expect`), and *how do I
-compare the two* (`compare`):
+**2. Scaffold a check** — this creates a ready-to-edit config file and an
+example facts file (it never overwrites anything you already have):
+
+```bash
+npx stilltrue init
+```
+
+Open the generated `stilltrue.config.mjs`. Each check answers three
+questions: *where do I fetch the truth from* (`source`), *what do I
+believe* (`expect`), and *how do I compare the two* (`compare`):
 
 ```js
 import { defineStilltrue, corpus, json, surname } from 'stilltrue';
@@ -63,6 +69,10 @@ export default defineStilltrue({
 
 This example says: *fetch the board page, and make sure every last name in
 my `school-board.json` file still appears somewhere on it.*
+
+Choosing what to assert is the judgment call — surnames beat full names,
+"143 schools" beats a bare "143". The short guide:
+[docs/MARKERS.md](docs/MARKERS.md).
 
 **3. Run it:**
 

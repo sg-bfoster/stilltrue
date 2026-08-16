@@ -107,6 +107,23 @@ try {
     case 'report':
       process.exit(await report(rest));
       break;
+    case 'init': {
+      const { init } = await import('./init.ts');
+      const { created, skipped } = await init(process.cwd());
+      for (const f of created) console.log(`created ${f}`);
+      for (const f of skipped) console.log(`kept existing ${f} (never overwritten)`);
+      if (created.length) {
+        console.log(
+          '\nNext steps:\n' +
+            '  1. Edit stilltrue.config.mjs — point source at the real page(s) your facts came from\n' +
+            '  2. Edit data/example-facts.json — or point the config at a facts file you already have\n' +
+            '  3. Run: npx stilltrue drift\n' +
+            'Picking good markers: docs/MARKERS.md in the stilltrue repo',
+        );
+      }
+      process.exit(0);
+      break;
+    }
     case 'golden':
       console.error(
         'stilltrue deliberately has no golden runner — promptfoo tests your prompts; stilltrue tests your facts.\n' +
@@ -116,7 +133,8 @@ try {
       break;
     default:
       console.log(
-        'usage: stilltrue drift [--config <path>] [--only <names>] [--json <path>] [--record] [--history <path>]\n' +
+        'usage: stilltrue init\n' +
+          '       stilltrue drift [--config <path>] [--only <names>] [--json <path>] [--record] [--history <path>]\n' +
           '       stilltrue report [--history <path>] [--out <path>] [--title <text>]',
       );
       process.exit(command ? 1 : 0);

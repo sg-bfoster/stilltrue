@@ -1,6 +1,6 @@
 {
   "name": "stilltrue",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Your tests check your code. stilltrue checks your facts. CI checks for AI-in-the-loop apps: drift (curated facts vs live sources), golden (regression evals), verify (judge answers against sources).",
   "keywords": [
     "drift",
