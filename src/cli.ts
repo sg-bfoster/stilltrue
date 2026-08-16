@@ -6,9 +6,12 @@
  * outage must not block CI), 1 = rot detected or usage error.
  */
 import { writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { findConfigPath, loadConfig } from './loadConfig.ts';
 import { runDrift } from './runner.ts';
+import { DEFAULT_HISTORY_PATH, loadHistory, recordRun } from './history.ts';
+import { renderReport } from './report.ts';
 import type { DriftResult } from './config.ts';
 
 const GH = !!process.env.GITHUB_ACTIONS;
@@ -33,6 +36,8 @@ async function drift(argv: string[]): Promise<number> {
       config: { type: 'string' },
       only: { type: 'string' },
       json: { type: 'string' },
+      record: { type: 'boolean' },
+      history: { type: 'string' },
     },
   });
 
@@ -60,7 +65,36 @@ async function drift(argv: string[]): Promise<number> {
     console.log(`results written to ${values.json}`);
   }
 
+  if (values.record) {
+    const historyPath = resolve(values.history ?? DEFAULT_HISTORY_PATH);
+    await recordRun(results, historyPath);
+    console.log(`run recorded to ${historyPath}`);
+  }
+
   return rotted > 0 ? 1 : 0;
+}
+
+async function report(argv: string[]): Promise<number> {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      history: { type: 'string' },
+      out: { type: 'string' },
+      title: { type: 'string' },
+    },
+  });
+  const historyPath = resolve(values.history ?? DEFAULT_HISTORY_PATH);
+  const history = await loadHistory(historyPath);
+  if (!history.length) {
+    console.error(
+      `no recorded runs at ${historyPath} — run \`stilltrue drift --record\` first (use --history to point elsewhere)`,
+    );
+    return 1;
+  }
+  const out = resolve(values.out ?? 'stilltrue-report.html');
+  await writeFile(out, renderReport(history, values.title));
+  console.log(`report written to ${out} (${history.length} runs)`);
+  return 0;
 }
 
 const [command, ...rest] = process.argv.slice(2);
@@ -70,13 +104,18 @@ try {
     case 'drift':
       process.exit(await drift(rest));
       break;
-    case 'golden':
     case 'report':
-      console.error(`stilltrue ${command}: not implemented yet — drift shipped first (docs/BRIEF.md)`);
+      process.exit(await report(rest));
+      break;
+    case 'golden':
+      console.error('stilltrue golden: not implemented yet — drift shipped first (docs/BRIEF.md)');
       process.exit(1);
       break;
     default:
-      console.log('usage: stilltrue drift [--config <path>] [--only <names>] [--json <path>]');
+      console.log(
+        'usage: stilltrue drift [--config <path>] [--only <names>] [--json <path>] [--record] [--history <path>]\n' +
+          '       stilltrue report [--history <path>] [--out <path>] [--title <text>]',
+      );
       process.exit(command ? 1 : 0);
   }
 } catch (err) {
