@@ -64,8 +64,6 @@ export interface StilltrueConfig {
   drift?: DriftCheck<any, any>[];
   /** Named verify pipelines (see src/verify.ts) — usable from library code. */
   verify?: Record<string, import('./verify.ts').VerifyStage<any>[]>;
-  /** golden is a later phase — see docs/BRIEF.md build plan. */
-  golden?: unknown;
 }
 
 /** Identity function for typed configs: `export default defineStilltrue({...})`. */

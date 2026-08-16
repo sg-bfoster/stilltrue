@@ -108,7 +108,10 @@ try {
       process.exit(await report(rest));
       break;
     case 'golden':
-      console.error('stilltrue golden: not implemented yet — drift shipped first (docs/BRIEF.md)');
+      console.error(
+        'stilltrue deliberately has no golden runner — promptfoo tests your prompts; stilltrue tests your facts.\n' +
+          'Use https://promptfoo.dev for prompt/answer regression evals. Doctrine + pairing guide: docs/GOLDEN.md',
+      );
       process.exit(1);
       break;
     default:

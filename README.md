@@ -9,9 +9,14 @@ no server, no dashboard, no SaaS.
 
 | Command | Watchdog | Status |
 |---|---|---|
-| `npx stilltrue drift` | Curated facts vs their live authoritative sources — fails the build on rot | **v0.1 focus** |
-| `npx stilltrue golden` | Deterministic regression evals for answers | later (may wrap promptfoo) |
-| `verify` (library) | Staged acceptance pipeline for AI output — judge answers against sources in the request path | **shipped 0.3.0** |
+| `npx stilltrue drift` | Curated facts vs their live authoritative sources — fails the build on rot | shipped |
+| `npx stilltrue report` | Self-contained HTML drift timeline from recorded runs | shipped |
+| `verify` (library) | Staged acceptance pipeline for AI output — judge answers against sources in the request path | shipped |
+
+For golden-style regression evals (did a code change break an answer?), use
+[promptfoo](https://promptfoo.dev) — **promptfoo tests your prompts;
+stilltrue tests your facts.** Our eval doctrine and how the tools pair:
+[docs/GOLDEN.md](docs/GOLDEN.md).
 
 **Why drift first:** "drift detection" in the market means statistical ML
 feature drift; website-change monitors alert humans, not CI. Nobody ships
@@ -97,9 +102,10 @@ const gen = await generateVerified({ generate: (feedback) => ask(model, prompt, 
 
 ## Status
 
-v0.3 — `drift` and `report` running in production CI (AskGwinnett); `verify`
-shipped as a library. `golden` remains open: wrap promptfoo or defer to it
-(see the brief's competitive research).
+v0.4 — feature-complete for the 1.0 shape: `drift` and `report` run in
+production CI (AskGwinnett), `verify` runs in the production request path
+(AskGwinnett's pre-publish check sweep). Golden is deliberately out of
+scope — settled in [docs/GOLDEN.md](docs/GOLDEN.md).
 
 ## License
 
