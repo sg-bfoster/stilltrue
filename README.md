@@ -336,6 +336,12 @@ the model for a retry. A broken checker never blocks your app — it fails
 open. See the [project docs](docs/BRIEF.md) and the typed API in
 `stilltrue`'s exports (`runVerify`, `zodStage`, `generateVerified`).
 
+**Bring your own judge — any provider, or none.** stilltrue ships no AI
+and never touches a model key: a checkpoint is just a function you supply,
+so the judge stage can call Gemini, OpenAI, Anthropic, a local model — or
+be a plain schema/rules check with no AI at all. Swapping providers means
+editing your function, never this package.
+
 ## What about testing prompts?
 
 That's a different job with a great existing tool:
