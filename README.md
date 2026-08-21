@@ -342,6 +342,12 @@ so the judge stage can call Gemini, OpenAI, Anthropic, a local model — or
 be a plain schema/rules check with no AI at all. Swapping providers means
 editing your function, never this package.
 
+Don't design the judge from scratch: **[docs/VERIFY.md](docs/VERIFY.md)**
+is a complete copy-paste walkthrough — a production-tested judging prompt
+("silence is not support"), the response mapping, retries, and the
+generate → verify → retry loop — with one marked line to swap for your
+provider.
+
 ## What about testing prompts?
 
 That's a different job with a great existing tool:
