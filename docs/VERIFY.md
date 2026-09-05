@@ -8,6 +8,14 @@ functions **you** supply. For deterministic checkpoints that's easy —
 stage that reads a generated answer and its sources and rules on whether
 the sources actually support it.
 
+> **Start here instead, for the common case.** If what you want is
+> *does this source support this claim?*, that judge now ships:
+> `supportStage({ judge })` gives you the prompt, the response schema and
+> the contradiction guard, and takes one argument — a function that calls
+> your model. See the README. This guide is what to read when the
+> ready-made stage is not the shape you need, or when you want to
+> understand what it is doing on your behalf.
+
 This guide is the missing recipe. It's extracted from a judge that has run
 in production on every AskGwinnett answer — copy it, then change one line
 to use your model provider.
@@ -192,3 +200,37 @@ The judge pattern above runs in production twice: on every
 an interactive demo you can poke at —
 [rabinforest.com/playground/fact-check](https://www.rabinforest.com/playground/fact-check)
 — paste a claim and a source and watch the three verdicts behave.
+
+---
+
+## What `supportStage` adds on top of this recipe
+
+The shipped stage is this walkthrough plus two things learned by running it
+against a smaller model than the one it was designed for.
+
+**A line in the prompt: a qualification is not a contradiction.** Sources
+qualify constantly — hours with holiday exceptions, fees with waivers, rules
+with carve-outs. Without that instruction, a judge treats the caveat as the
+source "saying otherwise" and returns `not_supported`, which overstates in
+the opposite direction. Measured on a local model, its absence also made the
+verdict *unstable*: adding two lines to a source that never mentioned the
+claim flipped it, three runs each way, where a frontier model was unmoved.
+
+**A guard in code, not in the prompt.** `not_supported` must carry the
+contradicting sentence, quoted, and the stage checks the quote is really in
+the source before letting the verdict stand. Prompting improves the odds;
+only a structural check gives a guarantee, and this is the verdict most
+worth guaranteeing.
+
+Two details of that check were paid for in wrong answers, and are worth
+knowing if you write your own:
+
+- **Match on the longest contiguous run, not the whole quote.** Judges tidy
+  quotes into grammatical sentences — quoting *"dogs must remain on a leash…"*
+  where the source reads *"Dogs are permitted in all county parks **but** must
+  remain on a leash…"*. Exact matching discards correct verdicts for it.
+- **Set the threshold from your corpus.** The default is 24 characters.
+  Contradictions written in prose measured 76-96, but a contradicting line in
+  a fee table — `"Seniors 65 and over $1.00."` — is only 26, and a first guess
+  of 40 silently threw those away. The number is measured on civic notices and
+  has no claim on anyone else's material.

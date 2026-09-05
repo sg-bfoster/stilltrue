@@ -23,7 +23,7 @@ update it.
 |---|---|
 | `npx stilltrue drift` | Checks your saved facts against their live sources. Fails loudly if a fact has gone stale. |
 | `npx stilltrue report` | Turns past check runs into a simple web page — green/red grid, what broke and when. |
-| `verify` | For developers: a checkpoint that inspects AI-generated answers before they're shown to users. |
+| `verify` | For developers: a checkpoint that inspects AI-generated answers before they're shown to users. `supportStage` ships the common one — does this source support this claim? |
 
 ## Getting started
 
@@ -342,11 +342,60 @@ so the judge stage can call Gemini, OpenAI, Anthropic, a local model — or
 be a plain schema/rules check with no AI at all. Swapping providers means
 editing your function, never this package.
 
-Don't design the judge from scratch: **[docs/VERIFY.md](docs/VERIFY.md)**
-is a complete copy-paste walkthrough — a production-tested judging prompt
-("silence is not support"), the response mapping, retries, and the
-generate → verify → retry loop — with one marked line to swap for your
-provider.
+### The common case, in six lines
+
+Most people arrive wanting one thing: *does this source actually support
+this claim?* `supportStage` is that check, ready-made. You bring a function
+that calls your model; it brings the prompt, the response schema, and the
+guard.
+
+```js
+import { runVerify, supportStage } from 'stilltrue';
+
+const stage = supportStage({
+  // The only required option. Return the model's reply — parsed or raw JSON.
+  judge: ({ system, user, schema }) => callMyModel({ system, user, schema }),
+});
+
+const result = await runVerify([stage], { claim, source });
+// result.ok      → true when the source supports the claim
+// result.value   → { verdict, reasoning, evidence, contradiction, guard }
+// result.messages → why it was rejected, ready for a retry
+```
+
+`verdict` is one of `supported`, `not_supported` or `cant_tell`. Silence is
+not support: a source that never addresses the claim returns `cant_tell`,
+even when the claim happens to be true.
+
+**"Not supported" has to earn itself.** That verdict tells a reader the
+source *says otherwise*, which is the strongest thing a judge can assert
+and the one most worth being wrong about. So the stage requires the judge
+to quote the contradicting sentence, and checks that quote against the
+source in code. If it cannot point at real text, the verdict is downgraded
+to `cant_tell` and a warning explains why. The check only ever downgrades —
+a missing quote is evidence of nothing except a missing quote.
+
+That guard is not theoretical. Judged by a small local model, adding two
+lines to a source that never mentioned the claim flipped a verdict from
+`supported` to `not_supported` — three runs each way, so not noise — where
+a frontier model stayed stable. A package that promises engine-agnostic
+verification has to survive the weaker engine.
+
+Useful options, all defaulted: `minRun` (how much of the contradiction
+quote must match the source — 24 characters, measured on civic notices and
+fee tables, not universal), `requireContradiction: false` to switch the
+guard off, `treatCantTellAs: 'warn'` to pass unanswerable claims instead of
+rejecting them, and `system` to replace the prompt entirely. `SUPPORT_SYSTEM`
+and `SUPPORT_SCHEMA` are exported too, so a provider with constrained
+decoding can take the schema directly.
+
+### Writing your own stages
+
+`supportStage` is one stage; a pipeline is a list of them, and any function
+of the right shape will do. **[docs/VERIFY.md](docs/VERIFY.md)** is the full
+walkthrough — the judging prompt explained, response mapping, retries, and
+the generate → verify → retry loop — for when the ready-made stage is not
+the shape you need.
 
 ## What about testing prompts?
 

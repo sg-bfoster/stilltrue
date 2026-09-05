@@ -23,3 +23,18 @@ export {
   type RunVerifyOptions,
   type GenerateVerifiedOptions,
 } from './verify.ts';
+export {
+  supportStage,
+  supportPrompt,
+  guardJudgement,
+  longestRun,
+  SUPPORT_SYSTEM,
+  SUPPORT_SCHEMA,
+  type Verdict,
+  type SupportInput,
+  type SupportJudgement,
+  type SupportResult,
+  type SupportStageOptions,
+  type Judge,
+  type JudgeRequest,
+} from './support.ts';
