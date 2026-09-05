@@ -17,7 +17,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "stilltrue": "./dist/cli.js"
+    "stilltrue": "dist/cli.js"
   },
   "files": [
     "dist"
