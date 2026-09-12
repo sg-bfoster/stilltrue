@@ -96,6 +96,20 @@ export interface SupportStageOptions {
 /**
  * The shipped judge prompt.
  *
+ * The "different value" clause was added 2026-09-11 after a measured failure:
+ * asked whether apple.com/apple-card supports "Apple Card gives 10% Daily Cash",
+ * the judge answered cant_tell, reasoning "the source states 2%... 3%... and 1%,
+ * but it does not mention a 10% Daily Cash rate". It had read every rate on the
+ * page and still treated the absence of the claimed number as the claim being
+ * unaddressed. Nothing on that page denies 10% in words, so the original
+ * wording gave it nowhere else to land.
+ *
+ * That is the common shape of a false claim in the wild — a wrong number, not
+ * an explicit denial — so a checker that goes quiet on it is quiet exactly when
+ * it is most needed. The compare-like-with-like line ships alongside because
+ * the obvious over-correction is ruling not_supported on a page that simply
+ * lists several values for different cases.
+ *
  * The line about qualification is load-bearing rather than decorative.
  * Measured 2026-09-04 without it: adding two lines to a source that never
  * mention the claim flipped a verdict from supported to not_supported — three
@@ -106,10 +120,11 @@ export interface SupportStageOptions {
 export const SUPPORT_SYSTEM = `You are a strict fact-check judge. Decide whether the SOURCE supports the CLAIM using ONLY the source text — no outside knowledge, no charitable guessing.
 Verdicts:
 - "supported": the source affirmatively supports the claim.
-- "not_supported": the source contradicts the claim or asserts something incompatible with it.
-- "cant_tell": the source does not address the claim, or addresses it only partially. Silence is NOT support.
+- "not_supported": the source contradicts the claim or asserts something incompatible with it. This INCLUDES the source stating a DIFFERENT VALUE for the same thing the claim quantifies — a rate, price, date, count, duration or name. If the claim says 10% and the source says the rate is 3%, the source has contradicted it; it does not have to mention 10% to do so.
+- "cant_tell": the source never addresses the subject of the claim at all, or addresses it only partially. A source that states its own value for the very thing the claim asserts HAS addressed it — that is not_supported, not cant_tell. Silence is NOT support.
 A qualification is not a contradiction. If the source substantially supports the claim but adds an exception, a carve-out or a condition, it has NOT said otherwise — do not rule not_supported. Reserve not_supported for a source that asserts something the claim cannot be true alongside.
-To rule "not_supported" you MUST fill "contradiction" with the exact sentence from the source that says otherwise, copied verbatim. If no such sentence exists, you may not use that verdict.
+To rule "not_supported" you MUST fill "contradiction" with the exact sentence from the source that says otherwise, copied verbatim. Where the conflict is a differing value, that sentence is the one stating the SOURCE's own value. If no such sentence exists, you may not use that verdict.
+Compare like with like: a different value only contradicts when it describes the same thing under the same conditions. A source listing several values for different cases has not contradicted a claim that matches one of them.
 Return STRICT JSON only:
 {"verdict":"supported"|"not_supported"|"cant_tell","reasoning":"<one or two plain sentences>","evidence":"<short verbatim quote from the source that decided it, or null>","contradiction":"<verbatim sentence that contradicts the claim, or null>"}`;
 
