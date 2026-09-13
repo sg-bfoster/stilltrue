@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.1 — 2026-09-13
+
+Docs restructure, no behavior changes except one message:
+
+- README cut from 408 lines to ~190. A fresh-eyes pass (install → first
+  green check in three minutes) showed setup was never the problem — the
+  document performed difficulty the tool doesn't have. The drift
+  quickstart, which tested perfect, is untouched.
+- New `docs/CONFIG.md`: the reference shelf (config fields, compare modes,
+  helpers, CLI flags), moved verbatim out of the tutorial path.
+- `docs/VERIFY.md` gained the `supportStage` section from the README, so
+  the ready-made stage lives beside the judge walkthrough it builds on.
+- `stilltrue init` now prints the full MARKERS.md URL — npm users have no
+  repo checkout for a relative path to resolve against.
+
 ## 0.7.0
 
 **A different value now counts as a contradiction.**

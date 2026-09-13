@@ -203,6 +203,39 @@ an interactive demo you can poke at —
 
 ---
 
+## The ready-made stage: `supportStage`
+
+Most people arrive wanting one thing: *does this source actually support
+this claim?* `supportStage` is that check, ready-made — the walkthrough
+above, shipped. You bring the judge function; it brings the prompt, the
+response schema, and the guard.
+
+```js
+import { runVerify, supportStage } from 'stilltrue';
+
+const stage = supportStage({
+  // The only required option. Return the model's reply — parsed or raw JSON.
+  judge: ({ system, user, schema }) => callMyModel({ system, user, schema }),
+});
+
+const result = await runVerify([stage], { claim, source });
+// result.ok      → true when the source supports the claim
+// result.value   → { verdict, reasoning, evidence, contradiction, guard }
+// result.messages → why it was rejected, ready for a retry
+```
+
+`verdict` is one of `supported`, `not_supported` or `cant_tell`. Silence is
+not support: a source that never addresses the claim returns `cant_tell`,
+even when the claim happens to be true.
+
+Useful options, all defaulted: `minRun` (how much of the contradiction
+quote must match the source — 24 characters, measured on civic notices and
+fee tables, not universal), `requireContradiction: false` to switch the
+guard off, `treatCantTellAs: 'warn'` to pass unanswerable claims instead of
+rejecting them, and `system` to replace the prompt entirely. `SUPPORT_SYSTEM`
+and `SUPPORT_SCHEMA` are exported too, so a provider with constrained
+decoding can take the schema directly.
+
 ## What `supportStage` adds on top of this recipe
 
 The shipped stage is this walkthrough plus two things learned by running it
