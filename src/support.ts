@@ -110,6 +110,19 @@ export interface SupportStageOptions {
  * the obvious over-correction is ruling not_supported on a page that simply
  * lists several values for different cases.
  *
+ * The list and same-subject lines were added 2026-10-28, the mirror image of
+ * the 10% failure on the same page. Asked whether apple.com/apple-card supports
+ * "Apple Card works with Windows PCs", the judge ruled not_supported, quoting
+ * "Apple Pay ... built into iPhone, Apple Watch, iPad, and Mac" and reasoning
+ * that listing only Apple devices "implies exclusion". That is an argument from
+ * silence, and the quote was about Apple Pay rather than Apple Card. The guard
+ * could not catch it, because the quote was real. On qwen3.6-35b-a3b the real
+ * case went from 0/3 to 3/3 correct, with no change on the 21-case comparison
+ * set, the controls, or the 10% case. Two synthetic list cases ("issued at the
+ * Duluth, Norcross and Snellville branches") still fail on that model, which
+ * reads a plain list as "only" these. Putting reasoning ahead of the verdict
+ * fixed those and broke the real Apple case 3/3, so it did not ship.
+ *
  * The line about qualification is load-bearing rather than decorative.
  * Measured 2026-09-04 without it: adding two lines to a source that never
  * mention the claim flipped a verdict from supported to not_supported — three
@@ -125,6 +138,8 @@ Verdicts:
 A qualification is not a contradiction. If the source substantially supports the claim but adds an exception, a carve-out or a condition, it has NOT said otherwise — do not rule not_supported. Reserve not_supported for a source that asserts something the claim cannot be true alongside.
 To rule "not_supported" you MUST fill "contradiction" with the exact sentence from the source that says otherwise, copied verbatim. Where the conflict is a differing value, that sentence is the one stating the SOURCE's own value. If no such sentence exists, you may not use that verdict.
 Compare like with like: a different value only contradicts when it describes the same thing under the same conditions. A source listing several values for different cases has not contradicted a claim that matches one of them.
+A list is not a denial. A source that names the devices, places, people or cases something applies to has NOT ruled out the ones it leaves unnamed, unless it says so in words — "only", "exclusively", "not available on", "does not work with". Absence from a list is silence, and silence is cant_tell.
+The contradicting sentence must be about the same subject as the claim. A sentence about a different product, service or program does not contradict it.
 Return STRICT JSON only:
 {"verdict":"supported"|"not_supported"|"cant_tell","reasoning":"<one or two plain sentences>","evidence":"<short verbatim quote from the source that decided it, or null>","contradiction":"<verbatim sentence that contradicts the claim, or null>"}`;
 

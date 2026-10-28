@@ -208,3 +208,11 @@ test('it composes with generateVerified', async () => {
   assert.equal(r.ok, true);
   assert.equal(r.attempts, 2);
 });
+
+test('the shipped prompt says a list is not a denial', () => {
+  // Measured 2026-10-28: "Apple Card works with Windows PCs" against
+  // apple.com/apple-card came back not_supported because the page lists the
+  // Apple devices Apple Pay is built into. Absence from a list is silence.
+  assert.match(SUPPORT_SYSTEM, /A list is not a denial/);
+  assert.match(SUPPORT_SYSTEM, /same subject as the claim/);
+});

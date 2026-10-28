@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.8.0 — 2026-10-28
+
+**A list is not a denial.**
+
+Asked whether `apple.com/apple-card` supports "Apple Card works with Windows
+PCs", the judge ruled `not_supported`, reasoning:
+
+> by listing only Apple devices as having the technology, it implies
+> exclusion of other platforms like Windows.
+
+The page never mentions Windows, so the right answer is `cant_tell`. The
+contradiction guard could not catch it, because the quoted sentence was real.
+It was about Apple Pay, though, not Apple Card. Two lines were added to the
+shipped judge prompt:
+
+- A source that names the cases something applies to has not ruled out the
+  ones it leaves unnamed, unless it says so in words ("only", "not available
+  on").
+- A contradicting sentence must be about the same subject as the claim.
+
+Measured on qwen3.6-35b-a3b, the weakest engine behind the demo:
+
+| Set | 0.7.1 | 0.8.0 |
+|---|---|---|
+| Apple: Windows PCs, 3 runs | 0/3 | 3/3 |
+| Apple: 10% Daily Cash, 3 runs | 3/3 | 3/3 |
+| Controls | 4/4 | 4/4 |
+| 21-case comparison set | 21/21 | 21/21 |
+| False supported, all sets | 0 | 0 |
+
+The box is not deterministic at temperature 0. On a second sample 0.8.0
+scored 20/21 on the comparison set, missing "Visitors must create an
+account". Rerun five times on each prompt, that case scored 4/5 on 0.7.1
+and 5/5 on 0.8.0, so the miss is run-to-run variance rather than a
+regression.
+
+Known gap: two synthetic list cases still come back `not_supported` on that
+model, which reads "issued at Duluth, Norcross and Snellville" as "issued
+only at" them. Generating reasoning before the verdict fixed those two but
+broke the real Apple case 3/3, so that change did not ship.
+
 ## 0.7.1 — 2026-09-13
 
 Docs restructure, no behavior changes except one message:
